@@ -11,6 +11,11 @@ pub mod solana_reputation {
         config.authority = ctx.accounts.authority.key();
         config.total_wallets = 0;
         config.bump = ctx.bumps.config;
+
+        emit!(ConfigInitialized {
+            config: config.key(),
+            authority: config.authority,
+        });
         Ok(())
     }
 
@@ -26,6 +31,11 @@ pub mod solana_reputation {
 
         let config = &mut ctx.accounts.config;
         config.total_wallets = config.total_wallets.checked_add(1).ok_or(RepError::Overflow)?;
+
+        emit!(ProfileRegistered {
+            config: rep.config,
+            wallet: rep.wallet,
+        });
         Ok(())
     }
 
@@ -46,6 +56,15 @@ pub mod solana_reputation {
         rep.score = rep.score.checked_add(amount).ok_or(RepError::Overflow)?;
         rep.endorsements = rep.endorsements.checked_add(1).ok_or(RepError::Overflow)?;
         rep.last_updated = now;
+
+        emit!(EndorsementEvent {
+            from: ctx.accounts.from.key(),
+            to: rep.wallet,
+            amount,
+            reason_hash,
+            new_score: rep.score,
+            timestamp: now,
+        });
         Ok(())
     }
 
@@ -145,6 +164,28 @@ pub struct Endorsement {
     pub reason_hash: [u8; 32],
     pub timestamp: i64,
     pub bump: u8,
+}
+
+#[event]
+pub struct ConfigInitialized {
+    pub config: Pubkey,
+    pub authority: Pubkey,
+}
+
+#[event]
+pub struct ProfileRegistered {
+    pub config: Pubkey,
+    pub wallet: Pubkey,
+}
+
+#[event]
+pub struct EndorsementEvent {
+    pub from: Pubkey,
+    pub to: Pubkey,
+    pub amount: i64,
+    pub reason_hash: [u8; 32],
+    pub new_score: i64,
+    pub timestamp: i64,
 }
 
 #[event]
