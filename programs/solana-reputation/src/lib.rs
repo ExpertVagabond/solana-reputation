@@ -30,7 +30,10 @@ pub mod solana_reputation {
         rep.bump = ctx.bumps.wallet_reputation;
 
         let config = &mut ctx.accounts.config;
-        config.total_wallets = config.total_wallets.checked_add(1).ok_or(RepError::Overflow)?;
+        config.total_wallets = config
+            .total_wallets
+            .checked_add(1)
+            .ok_or(RepError::Overflow)?;
 
         emit!(ProfileRegistered {
             config: rep.config,
